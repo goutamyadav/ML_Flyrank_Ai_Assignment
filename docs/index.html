@@ -65,10 +65,10 @@
 <div class="wrap">
 
 <header class="site">
-  <div class="eyebrow">Machine-learning research capstone · content refresh lane</div>
+  <div class="eyebrow">FlyRank ML Internship capstone · content refresh lane</div>
   <h1>Which pages should a content team refresh first?</h1>
-  <p class="byline">A leakage-audited, client-grouped ranking across 30,000 anonymized pages, with an editor-facing action playbook</p>
-  <p class="sub">Applied machine learning · decision-support for review order · non-production · static analysis of one snapshot</p>
+  <p class="byline">A leakage-audited, client-grouped ranking across 30,000 anonymized pages — solving FlyRank's content-decay prioritization problem with a validated editor-facing action playbook</p>
+  <p class="sub">FlyRank content infrastructure · decision-support for review order · non-production · static analysis of one snapshot</p>
   <nav class="toc" aria-label="Contents">
     <a href="#abstract">Abstract</a>
     <a href="#problem">Problem</a>
@@ -87,25 +87,25 @@
 <section id="abstract">
   <h2><span class="num">1.</span> Abstract</h2>
   <div class="abstract">
-    <p><strong>Question.</strong> When a content editor has limited time, which pages should be reviewed first for a refresh?</p>
+    <p><strong>Question.</strong> FlyRank publishes content into client websites at scale, then watches search performance to keep it sharp. Over time pages decay — rankings slip, CTR drops, impressions slide — and the team cannot review them all. With limited editorial hours, which pages should a FlyRank content editor review first, and what action should each page get?</p>
     <p><strong>Data.</strong> I worked with an anonymized release of the FlyRank ML&nbsp;Internship dataset: 30,000 pages across 32 pseudonymized clients with trailing-90-day search performance.</p>
     <p><strong>Method.</strong> I scored every page with an interpretable hand-built rule and a gradient-boosting model on 36 leakage-audited features, validating both on a client-grouped holdout where no client appeared in training (6,163 pages, 7 held-out clients).</p>
     <p><strong>Result.</strong> On that held-out set the gradient-boosting ranker placed already-observed declining pages at the head of its queue at P@10&nbsp;=&nbsp;0.90 (the hand-rule: 0.40; chance ≈ 0.51), with AUC 0.622 and consistent results across repeated grouped splits and GroupKFold.</p>
-    <p><strong>What it is for.</strong> The output is a public, non-production review playbook — an archetype-and-reason-code queue that orders which pages a human should read first, not an automated refresh system and not a forecast.</p>
+    <p><strong>What it is for.</strong> The output is a public, non-production review playbook — an archetype-and-reason-code queue that answers the question FlyRank's content team faces every week (where do we start?) by ordering which pages a human should read first, not an automated refresh system and not a forecast.</p>
   </div>
   <p class="note">Keywords: content refresh · content decay · search performance · client-grouped validation · label leakage · precision@K · decision support</p>
 </section>
 
 <section id="problem">
   <h2><span class="num">2.</span> The problem</h2>
-  <p class="lead">Every content library decays. Pages that once ranked quietly slide down while nobody is watching — and by the time the drop is obvious, reversing it is expensive.</p>
-  <p>A realistic content team publishes and maintains thousands of pages. Editorial time is the scarce resource, so the real decision is not <em>which page is declining</em>, it is <em>which page to look at first</em>. A page that sits at exactly the wrong spot in the review queue is a missed quarter of what is often a five-figure-impressions piece of inventory.</p>
-  <p>The temptation is to build a score and let it decide. That is exactly where machine learning quietly fails: a score that looks great because it memorized who it trained on, or a queue that is right about average pages and blind to the few giant ones that actually carry the reach. This paper spends most of its effort on those two failure modes.</p>
+  <p class="lead">FlyRank builds content as infrastructure: researches, writes, publishes pages straight into a client's website, then monitors search performance and optimizes. That full-cycle model works at scale — but scale means thousands of pages, and every one of them ages.</p>
+  <p>Pages that once ranked quietly slide down while nobody is watching. By the time the drop is obvious, reversing it is expensive. FlyRank already runs hand-written flags — quick-win tags, needs-attention signals — that surface some of these pages. But these rules run out where signals get tangled: a page that looks fine on staleness alone might be silently hemorrhaging impressions, and a "needs attention" flag gives no guidance on <em>which action</em> to take or <em>which page first</em>. The real scarce resource is editorial time, and the real decision is: of the 30,000 pages FlyRank manages, which one should a human fix first?</p>
+  <p>This paper sits exactly in that gap. It builds a client-grouped, leakage-audited ranking model on FlyRank's own production data, then wraps it in an archetype-and-action playbook that answers the question FlyRank's content team faces every week: where do we start?</p>
 </section>
 
 <section id="data">
   <h2><span class="num">3.</span> Data</h2>
-  <p><strong>Source and size.</strong> The bundled anonymized starter release of the FlyRank ML&nbsp;Internship dataset: a single table, one row per indexed page — <strong>30,000 rows × 44 columns</strong> across <strong>32 pseudonymized clients</strong>.</p>
+  <p><strong>Source and size.</strong> A real FlyRank production snapshot, anonymized for the ML&nbsp;Internship: a single table, one row per indexed page — <strong>30,000 rows × 44 columns</strong> across <strong>32 pseudonymized clients</strong>. This is not synthetic data; it is FlyRank's actual content portfolio, the same data FlyRank's own production flags run on.</p>
   <p><strong>Time windows.</strong> Performance metrics are trailing-90-day aggregates (e.g. <code>impressions_90d</code>, <code>clicks_90d</code>, <code>avg_position</code>). The label is derived from a comparison inside that window (see Methodology). The release is <em>one snapshot</em>: every row shares the same trailing window, so a temporal train/test split is not representable from this file.</p>
   <p><strong>What was excluded, and why.</strong></p>
   <ul>
@@ -140,7 +140,7 @@ one reason code per page: stale_and_low_ctr_visible / stale_visible / low_ctr_go
 
   <h3>Validation design</h3>
   <ul>
-    <li><strong>Client-grouped holdout</strong> (<code>GroupShuffleSplit</code>, test 20%, seed 42): no client appears in both train and test. Training 23,837 pages (decline 0.550), test 6,163 pages from 7 held-out clients (decline 0.511).</li>
+    <li><strong>Client-grouped holdout</strong> (<code>GroupShuffleSplit</code>, test 20%, seed 42): no client appears in both train and test — the model has never seen these clients' content, just as a production FlyRank deployment would not have. Training 23,837 pages (decline 0.550), test 6,163 pages from 7 held-out clients (decline 0.511).</li>
     <li><strong>Robustness:</strong> re-drawn grouped splits (seeds 7, 123, 2026) and <code>GroupKFold(5)</code> by client.</li>
     <li><strong>Why grouped, not random:</strong> a random split lets one client's pages sit on both sides and the model memorizes the client. Measured: random-split AUC for gradient boosting 0.786 vs 0.622 grouped — the gap is how much of the "win" was memorization, and the grouped number is the one we report.</li>
   </ul>
@@ -206,7 +206,7 @@ one reason code per page: stale_and_low_ctr_visible / stale_visible / low_ctr_go
 
 <section id="recommend">
   <h2><span class="num">7.</span> Ranked recommendations (the action playbook)</h2>
-  <p class="lead">What an editor does with the queue: read it from the top, spend the cheap check first, and never let the score replace a human decision.</p>
+  <p class="lead">What a FlyRank content editor does with the queue: read it from the top, spend the cheap check first, and never let the score replace a human decision. This is the playbook that wraps around the ranker — the part FlyRank's content team would actually touch.</p>
 
   <table>
     <tr><th>Archetype</th><th>Trigger (measured on the page)</th><th>Recommended action</th><th class="num">Effort</th></tr>
@@ -243,9 +243,9 @@ one reason code per page: stale_and_low_ctr_visible / stale_visible / low_ctr_go
   <p>This work is built on the <strong>FlyRank ML Internship dataset</strong> — an anonymized, public-safe release of real production search data (~30,000 pages, 32 pseudonymized clients) provided by <a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank</a> (opens in a new tab), the search-intelligence platform behind the FlyRank ML&nbsp;Internship. The data is the reason this paper is able to say <em>measured</em>: it is real portfolio behavior, not synthetic. Any errors in interpretation are the author's, not the data's.</p>
   <div class="context">
     <h3>The 10-second version</h3>
-    <p><strong>Problem.</strong> Large content libraries decay, and nobody can review every page.</p>
-    <p><strong>Contribution.</strong> A leakage-audited ranker, validated on clients the model never saw, that orders pages for review and explains each action.</p>
-    <p><strong>Utility.</strong> An editor opens the top of the queue, checks the giants first, and spends the 30 cheapest seconds on title/meta work; nothing is automated or forecast.</p>
+    <p><strong>Problem.</strong> FlyRank publishes content at scale; the pages decay; the team cannot review them all.</p>
+    <p><strong>Contribution.</strong> A leakage-audited ranker, validated on FlyRank clients the model never saw, that orders pages for review and explains each action.</p>
+    <p><strong>Utility.</strong> A FlyRank editor opens the top of the queue, checks the giants first, and spends the 30 cheapest seconds on title/meta work; nothing is automated or forecast.</p>
   </div>
 </section>
 
