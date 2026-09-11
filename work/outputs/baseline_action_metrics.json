@@ -1,0 +1,30 @@
+{
+  "base_rate": 0.542,
+  "evaluation_only": [
+    "is_declining_label"
+  ],
+  "lane": "content_refresh_prioritization",
+  "n_rows": 30000,
+  "notebook": "w04_baseline_score.ipynb",
+  "precision_at_k": {
+    "5": 0.8,
+    "10": 0.8,
+    "20": 0.55,
+    "50": 0.48,
+    "100": 0.45
+  },
+  "reason_codes": {
+    "low_ctr_good_position": 6432,
+    "monitor": 23546,
+    "stale_and_low_ctr_visible": 4,
+    "stale_visible": 18
+  },
+  "rule": "stale_flag  = days_since_last_update >= 180 and impressions_90d >= 300; ctr_gap_flag = 0 < avg_position <= 10 and ctr < 0.5 and impressions_90d >= 300",
+  "rule_inputs": [
+    "impressions_90d",
+    "days_since_last_update",
+    "avg_position",
+    "ctr"
+  ],
+  "score_formula": "log1p(impressions_90d) * (1 + stale_flag) * (1 + ctr_gap_flag)"
+}
