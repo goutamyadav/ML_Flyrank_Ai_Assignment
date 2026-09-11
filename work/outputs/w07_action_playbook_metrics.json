@@ -1,0 +1,47 @@
+{
+  "figures": [
+    "work/figures/fig_queue_quality.png",
+    "work/figures/fig_archetype_mix_top100.png",
+    "work/figures/fig_reach_curve.png"
+  ],
+  "flagged_actions": {
+    "monitor_no_action": 1416,
+    "recheck_next_cycle": 671,
+    "review_first_hand_check": 779,
+    "rewrite_title_meta": 460,
+    "verify_intent_then_refresh": 116
+  },
+  "notebook": "w07_action_playbook.ipynb",
+  "queue_export": "work/outputs/action_playbook_queue.csv",
+  "reach_at_risk": {
+    "flagged_total_impressions": 12716596,
+    "top50_reach_impressions": 199778
+  },
+  "retrain_triggers": {
+    "drift_trigger_pct": 20,
+    "grouped_auc_floor": 0.592,
+    "p10_floor": 0.8
+  },
+  "scope": "client_grouped_holdout_test_pages_only",
+  "snapshot_baselines": {
+    "decline_share": 0.5420666666666667,
+    "median_avg_position": 11.4,
+    "median_days_since_last_update": 20.0,
+    "median_impressions_90d": 731.0,
+    "n_rows": 30000
+  },
+  "test_base_rate": 0.511,
+  "test_rows": 6163,
+  "top100_archetypes": {
+    "fresh_giant": 27,
+    "giant": 4,
+    "quiet_low_reach": 25,
+    "visible_low_ctr": 36,
+    "watch": 8
+  },
+  "validated": {
+    "p10": 0.9,
+    "p50": 0.9,
+    "roc_auc": 0.622
+  }
+}
