@@ -1,0 +1,17 @@
+{
+  "notebook": "w05_model.ipynb",
+  "seed": 42,
+  "split": "client_grouped_holdout_GroupShuffleSplit_test20%",
+  "test_base_rate": 0.511,
+  "test_rows": 6163,
+  "test_split_table": {
+    "gradient_boosting": {
+      "AUC": 0.622,
+      "P@10": 0.9
+    },
+    "week4_rule_baseline": {
+      "AUC": 0.542,
+      "P@10": 0.4
+    }
+  }
+}
