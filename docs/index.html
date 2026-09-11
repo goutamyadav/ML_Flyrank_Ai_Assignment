@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which pages should a content team refresh first? A leakage-audited ranking across 30,000 anonymized pages</title>
+<meta name="description" content="Which pages should a content editor review first when time is limited? A client-grouped, leakage-audited ranking model beats a hand-built baseline at flagging pages with observed declining search performance.">
+<style>
+  :root{
+    --ink:#1c2430; --muted:#5a6873; --accent:#1a4f8b; --accent-soft:#eef3f9;
+    --warm:#b25a1f; --line:#d9dfe7; --bg:#ffffff; --code:#f4f6f9;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--ink);
+       font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:760px; margin:0 auto; padding:0 20px;}
+  header.site{padding:56px 0 8px; border-bottom:1px solid var(--line);}
+  .eyebrow{color:var(--accent); font-size:13px; letter-spacing:.09em; text-transform:uppercase; font-weight:600;}
+  h1{font-size:clamp(26px,4.5vw,40px); line-height:1.15; margin:14px 0 8px; font-weight:800; letter-spacing:-.01em;}
+  .byline{color:var(--muted); font-size:15px; margin-bottom:6px;}
+  .sub{margin:6px 0 18px; color:var(--muted);}
+  .toc{margin:26px 0 4px; padding:14px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+       font-size:14px; display:flex; flex-wrap:wrap; gap:6px 16px; justify-content:center;}
+  .toc a{color:var(--accent); text-decoration:none;}
+  .toc a:hover{text-decoration:underline;}
+  article{padding:36px 0 8px;}
+  section{padding:18px 0 26px;}
+  h2{font-size:clamp(20px,3vw,26px); margin:34px 0 12px; padding-top:8px; font-weight:700; letter-spacing:-.01em;}
+  h2 .num{color:var(--accent);}
+  h3{font-size:17px; margin:26px 0 8px; font-weight:700;}
+  p{margin:12px 0;}
+  .lead{font-size:17px;}
+  .abstract{background:var(--accent-soft); border-left:4px solid var(--accent); padding:0 22px; border-radius:0 8px 8px 0; margin:14px 0;}
+  .abstract p{line-height:1.6;}
+  .context{background:#faf7f2; border:1px solid var(--line); border-radius:10px; padding:4px 22px 14px; margin:22px 0;}
+  .context h3{margin-top:16px;}
+  ul,ol{margin:10px 0; padding-left:24px;}
+  li{margin:7px 0;}
+  strong{color:#0f1520;}
+  figure{margin:26px 0;}
+  figure img{width:100%; height:auto; border:1px solid var(--line); border-radius:8px; display:block;}
+  figcaption{font-size:14px; color:var(--muted); margin-top:8px;}
+  figcaption .takeaway{color:var(--ink); font-weight:600;}
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:15px;}
+  th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line);}
+  th{font-weight:700; border-bottom:2px solid var(--accent);}
+  td.num,th.num{text-align:right; font-variant-numeric:tabular-nums;}
+  tr.ht{background:var(--accent-soft);}
+  .hl{color:var(--accent); font-weight:700;}
+  pre{background:var(--code); border:1px solid var(--line); border-radius:8px; padding:14px 16px; overflow-x:auto; font-size:13.5px; line-height:1.55;}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--code); padding:1px 5px; border-radius:4px; font-size:.92em;}
+  pre code{background:none; padding:0;}
+  .note{font-size:14.5px; color:var(--muted);}
+  .box{border:1px solid var(--line); border-radius:10px; padding:2px 18px 10px; margin:18px 0; background:#fff;}
+  .warn{border-left:4px solid var(--warm); background:#fdf6ef; padding:2px 18px 10px; border-radius:0 8px 8px 0;}
+  footer{border-top:1px solid var(--line); margin-top:30px; padding:26px 0 60px; color:var(--muted); font-size:14.5px;}
+  footer a{color:var(--accent);}
+  .pagenum{counter-reset:none;}
+  @media (max-width:520px){ body{font-size:15px;} .toc{justify-content:flex-start;} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="site">
+  <div class="eyebrow">Machine-learning research capstone · content refresh lane</div>
+  <h1>Which pages should a content team refresh first?</h1>
+  <p class="byline">A leakage-audited, client-grouped ranking across 30,000 anonymized pages, with an editor-facing action playbook</p>
+  <p class="sub">Applied machine learning · decision-support for review order · non-production · static analysis of one snapshot</p>
+  <nav class="toc" aria-label="Contents">
+    <a href="#abstract">Abstract</a>
+    <a href="#problem">Problem</a>
+    <a href="#data">Data</a>
+    <a href="#method">Method</a>
+    <a href="#results">Results</a>
+    <a href="#limits">Limitations</a>
+    <a href="#recommend">Recommendations</a>
+    <a href="#reproduce">Reproduce</a>
+    <a href="#credit">Credit</a>
+  </nav>
+</header>
+
+<article>
+
+<section id="abstract">
+  <h2><span class="num">1.</span> Abstract</h2>
+  <div class="abstract">
+    <p><strong>Question.</strong> When a content editor has limited time, which pages should be reviewed first for a refresh?</p>
+    <p><strong>Data.</strong> I worked with an anonymized release of the FlyRank ML&nbsp;Internship dataset: 30,000 pages across 32 pseudonymized clients with trailing-90-day search performance.</p>
+    <p><strong>Method.</strong> I scored every page with an interpretable hand-built rule and a gradient-boosting model on 36 leakage-audited features, validating both on a client-grouped holdout where no client appeared in training (6,163 pages, 7 held-out clients).</p>
+    <p><strong>Result.</strong> On that held-out set the gradient-boosting ranker placed already-observed declining pages at the head of its queue at P@10&nbsp;=&nbsp;0.90 (the hand-rule: 0.40; chance ≈ 0.51), with AUC 0.622 and consistent results across repeated grouped splits and GroupKFold.</p>
+    <p><strong>What it is for.</strong> The output is a public, non-production review playbook — an archetype-and-reason-code queue that orders which pages a human should read first, not an automated refresh system and not a forecast.</p>
+  </div>
+  <p class="note">Keywords: content refresh · content decay · search performance · client-grouped validation · label leakage · precision@K · decision support</p>
+</section>
+
+<section id="problem">
+  <h2><span class="num">2.</span> The problem</h2>
+  <p class="lead">Every content library decays. Pages that once ranked quietly slide down while nobody is watching — and by the time the drop is obvious, reversing it is expensive.</p>
+  <p>A realistic content team publishes and maintains thousands of pages. Editorial time is the scarce resource, so the real decision is not <em>which page is declining</em>, it is <em>which page to look at first</em>. A page that sits at exactly the wrong spot in the review queue is a missed quarter of what is often a five-figure-impressions piece of inventory.</p>
+  <p>The temptation is to build a score and let it decide. That is exactly where machine learning quietly fails: a score that looks great because it memorized who it trained on, or a queue that is right about average pages and blind to the few giant ones that actually carry the reach. This paper spends most of its effort on those two failure modes.</p>
+</section>
+
+<section id="data">
+  <h2><span class="num">3.</span> Data</h2>
+  <p><strong>Source and size.</strong> The bundled anonymized starter release of the FlyRank ML&nbsp;Internship dataset: a single table, one row per indexed page — <strong>30,000 rows × 44 columns</strong> across <strong>32 pseudonymized clients</strong>.</p>
+  <p><strong>Time windows.</strong> Performance metrics are trailing-90-day aggregates (e.g. <code>impressions_90d</code>, <code>clicks_90d</code>, <code>avg_position</code>). The label is derived from a comparison inside that window (see Methodology). The release is <em>one snapshot</em>: every row shares the same trailing window, so a temporal train/test split is not representable from this file.</p>
+  <p><strong>What was excluded, and why.</strong></p>
+  <ul>
+    <li><code>trend_direction</code>, <code>trend_pct</code> — the label and its sibling; never features.</li>
+    <li>Six <code>*_last_30d</code> / <code>*_prev_30d</code> columns — they sit inside the label's window; feeding them in is leakage (measured in the audit below).</li>
+    <li>All identifiers (<code>client_id</code>, <code>content_id</code>) — pseudonyms are for grouping and lookup only, never model inputs.</li>
+  </ul>
+  <p class="note">Public-safety: only pseudonyms and aggregates appear anywhere in this paper. No client names, URLs, or raw queries.</p>
+</section>
+
+<section id="method">
+  <h2><span class="num">4.</span> Methodology</h2>
+
+  <h3>Label</h3>
+  <p><code>is_declining_label = (trend_direction == "down")</code> — the page's <em>already-observed</em> trend over the recent window. Because it is observed state, the honest description of our model is a <strong>state estimator</strong> ("matches the profile of pages observed declining"), never a forecaster.</p>
+
+  <h3>Features (36)</h3>
+  <ul>
+    <li>12 log1p count columns (impressions, clicks, sessions, engagement, scrolls, keyword volume, word/char counts, …)</li>
+    <li>10 raw state columns (position, CTR, engagement/scroll rates, content age, days since update, …)</li>
+    <li>6 ordinal tier codes (competition, age, freshness, word count, impression, position tiers)</li>
+    <li>One-hot <code>content_type</code> + <code>main_intent</code></li>
+  </ul>
+  <p>Assumption, stated: cross-sectional features can rank pages by similarity to already-declining pages. That supports review order, and nothing more.</p>
+
+  <h3>Baseline: the hand-written rule (Week 4)</h3>
+  <pre><code>score = log1p(impressions_90d) · (1 + stale_flag) · (1 + ctr_gap_flag)
+stale_flag  = days_since_last_update ≥ 180  and  impressions_90d ≥ 300   → action: refresh content
+ctr_gap_flag = 0 &lt; avg_position ≤ 10  and  ctr &lt; 0.5  and  impressions_90d ≥ 300 → action: rewrite title/meta
+one reason code per page: stale_and_low_ctr_visible / stale_visible / low_ctr_good_position / monitor</code></pre>
+  <p>Signal checks that produced it: staleness was <strong>mixed</strong> (the update dates sit on a few bulk batch dates), CTR-vs-position was <strong>confirmed</strong> (visible pages with CTR &lt; 0.5% decline at an observed higher rate). The rule is evaluated only — it is the thing to beat, never a feature (the audit shows why).</p>
+
+  <h3>Validation design</h3>
+  <ul>
+    <li><strong>Client-grouped holdout</strong> (<code>GroupShuffleSplit</code>, test 20%, seed 42): no client appears in both train and test. Training 23,837 pages (decline 0.550), test 6,163 pages from 7 held-out clients (decline 0.511).</li>
+    <li><strong>Robustness:</strong> re-drawn grouped splits (seeds 7, 123, 2026) and <code>GroupKFold(5)</code> by client.</li>
+    <li><strong>Why grouped, not random:</strong> a random split lets one client's pages sit on both sides and the model memorizes the client. Measured: random-split AUC for gradient boosting 0.786 vs 0.622 grouped — the gap is how much of the "win" was memorization, and the grouped number is the one we report.</li>
+  </ul>
+
+  <h3>Leakage audit (Week 6)</h3>
+  <table>
+    <tr><th>Probe</th><th class="num">AUC (grouped test)</th></tr>
+    <tr><td>Honest features as shipped</td><td class="num">0.622</td></tr>
+    <tr><td>All eight overlapping 90-day sums removed</td><td class="num">0.621</td></tr>
+    <tr><td>My own hand-rule added as a feature (directional, dropped)</td><td class="num">0.624</td></tr>
+    <tr class="ht"><td>One label-adjacent sibling column added (<code>impressions_last_30d</code>)</td><td class="num">0.849</td></tr>
+  </table>
+  <p>The bottom row is the harness sanity check: leak a sibling column and the score explodes — which proves the top row is not quietly reading the same column. The shipped model does not lean on the overlapping 90-day sums (removing them barely moves AUC) and it is not secretly the hand-rule (adding it barely moves AUC).</p>
+</section>
+
+<section id="results">
+  <h2><span class="num">5.</span> Results</h2>
+  <p class="lead">On the same client-grouped holdout, every model beats the hand-rule at the top of the queue, and gradient boosting leads at P@10–@100. Headline framing is honest: boosting ≈ logistic regression on AUC (0.622 vs 0.622) — the complexity buys <em>queue shape</em>, not a better global score.</p>
+
+  <table>
+    <tr><th>Method</th><th class="num">P@10</th><th class="num">P@20</th><th class="num">P@50</th><th class="num">P@100</th><th class="num">AUC</th></tr>
+    <tr><td>Base rate (chance ordering)</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">0.511</td></tr>
+    <tr><td>Hand-written rule (baseline)</td><td class="num">0.40</td><td class="num">0.40</td><td class="num">0.42</td><td class="num">0.41</td><td class="num">0.542</td></tr>
+    <tr><td>Logistic regression</td><td class="num">0.80</td><td class="num">0.75</td><td class="num">0.76</td><td class="num">0.72</td><td class="num">0.622</td></tr>
+    <tr><td>Random forest</td><td class="num">0.60</td><td class="num">0.75</td><td class="num">0.68</td><td class="num">0.69</td><td class="num">0.610</td></tr>
+    <tr class="ht"><td>Gradient boosting</td><td class="num hl">0.90</td><td class="num hl">0.90</td><td class="num hl">0.90</td><td class="num hl">0.86</td><td class="num hl">0.622</td></tr>
+  </table>
+  <p class="note">Held-out test n = 6,163 pages, 7 held-out clients. GroupKFold(5) AUC by client: gradient boosting 0.684 ± 0.043, random forest 0.678 ± 0.037, logistic regression 0.673 ± 0.039. Repeated grouped splits: boosting P@10 0.8–0.9, AUC 0.66–0.69.</p>
+
+  <figure>
+    <img src="img/fig_queue_quality.png" alt="Bar chart comparing precision at 10 and 50 for the base rate, the hand rule and gradient boosting on held-out pages.">
+    <figcaption><strong>Queue quality on held-out clients.</strong> Gradient boosting flags decline at P@10 0.90 vs 0.40 for the hand-rule; a flat/random ordering would sit at the base rate ≈ 0.51. <span class="takeaway">The model's advantage is at the top of the queue — exactly where review time is spent.</span></figcaption>
+  </figure>
+
+  <figure>
+    <img src="img/fig_archetype_mix_top100.png" alt="Horizontal bar chart of archetype counts in the top-100 flagged pages.">
+    <figcaption><strong>What the top of the queue is made of.</strong> Of the top-100 pages, 36 are <em>visible with low CTR</em>, 27 are <em>giants</em> (including recently-updated ones), 25 are below the action noise floor. <span class="takeaway">The cheapest real work — title/meta on visible low-CTR pages — and the highest-reach hand-checks dominate the first hundred.</span></figcaption>
+  </figure>
+
+  <figure>
+    <img src="img/fig_reach_curve.png" alt="Line chart comparing declining reach captured by queue depth for gradient boosting, the hand rule, and random ordering.">
+    <figcaption><strong>Reach at risk vs review depth.</strong> Over the first ~1,000 pages reviewed, the model's ordering captures more of the total declining impression reach than the hand-rule and far more than random. <span class="takeaway">Ordering changes which reach actually gets seen — the whole point of a review queue.</span></figcaption>
+  </figure>
+
+  <div class="warn">
+    <h3>Where the score is blind, measured</h3>
+    <p>The model under-ranks the genuinely big pages: the two largest flagged-and-missed examples were ~500K-impression, recently-updated pages that the hand-rule had actually caught. Of flagged at-risk reach (~12.7M impressions), the top-50 rows by probability cover only ~2% — the giants sit at low probability ranks. This is why the playbook's first rule is a human hand-check of giants, not faith in the score.</p>
+  </div>
+</section>
+
+<section id="limits">
+  <h2><span class="num">6.</span> Limitations &amp; honest framing</h2>
+  <ul>
+    <li><strong>One snapshot.</strong> No time generalization is claimed; there is no before/after, so nothing here is evidence that refreshing <em>causes</em> recovery.</li>
+    <li><strong>Observed state, overlapping windows.</strong> The label is already-observed decline, and 90-day feature sums overlap its windows — acceptable for a state estimator, disqualifying for a forecast.</li>
+    <li><strong>Portfolio-bound validation.</strong> Held-out clients are within one 32-client portfolio; a new client needs its own validation before the queue is trusted.</li>
+    <li><strong>Ranking metric, not a guarantee.</strong> P@K is measured in this sample; it describes the queue, not next quarter.</li>
+    <li><strong>Pseudonymous data.</strong> No client-, keyword- or URL-level conclusions.</li>
+    <li><strong>Reach concentration.</strong> The biggest pages are the hardest for the score, and are handled by the giants-first rule, not by the probability ordering.</li>
+  </ul>
+  <p>Language used throughout is the claim ladder: <em>observed / measured / directional / decision-support</em>. Nowhere does this paper say "refresh improves rankings" — it says these pages look worth <em>reviewing</em> first, with the reasons stated.</p>
+</section>
+
+<section id="recommend">
+  <h2><span class="num">7.</span> Ranked recommendations (the action playbook)</h2>
+  <p class="lead">What an editor does with the queue: read it from the top, spend the cheap check first, and never let the score replace a human decision.</p>
+
+  <table>
+    <tr><th>Archetype</th><th>Trigger (measured on the page)</th><th>Recommended action</th><th class="num">Effort</th></tr>
+    <tr><td>Giant / fresh giant</td><td>impressions ≥ 3,000</td><td>Hand-check the numbers first — even a small trend shift is a big absolute move</td><td class="num">1 · cheap</td></tr>
+    <tr><td>Mature &amp; stale</td><td>impressions ≥ 300, last update ≥ 180d, age ≥ 270d</td><td>Full content refresh (facts, structure, intent)</td><td class="num">3 · costly</td></tr>
+    <tr><td>Visible, low CTR</td><td>position 1–10, CTR &lt; 0.5%, impressions ≥ 300</td><td>Rewrite title/meta; run one snippet test</td><td class="num">2 · medium</td></tr>
+    <tr><td>Visible, steady</td><td>position 1–10, impressions ≥ 300</td><td>Verify keyword–intent match before touching</td><td class="num">2 · medium</td></tr>
+    <tr><td>Quiet, low reach</td><td>impressions &lt; 300</td><td>Monitor only — below the noise floor, do not act</td><td class="num">0</td></tr>
+    <tr><td>Watch</td><td>anything else flagged</td><td>Recheck next cycle</td><td class="num">0</td></tr>
+  </table>
+
+  <p><strong>Never automated.</strong> No auto-publish of refreshes (no causal evidence), no auto-delete / consolidate / redirect (destroys reach), no auto-sent client numbers (all statistics are on pseudonymous data), no acting on sub-300-impression pages (noise floor), no forecasting next-quarter traffic, and no claim of "knowing" any ranking algorithm. Every queue row is a question a person answers.</p>
+
+  <p><strong>Monitoring &amp; retrain triggers.</strong> Re-validate on a new export if grouped-holdout AUC falls below 0.592 or P@10 below 0.80; drift-check the stored baselines (median impressions 731, median days-since-update 20, median position 11.4); and if editors find that the top-50 they review confirm decline at below the base rate (~51%), the queue has gone stale.</p>
+</section>
+
+<section id="reproduce">
+  <h2><span class="num">8.</span> Reproducibility</h2>
+  <p>Everything is in the repository this page ships from, and every number on this page is regenerated by the notebooks it names.</p>
+  <ul>
+    <li><a href="https://github.com/goutamyadav/ML_Flyrank_Ai_Assignment">Repository</a> — seed 42 throughout; Python 3.13, scikit-learn 1.9.0 (sklearn-native gradient boosting; no external model libs).</li>
+    <li><code>work/notebooks/w04_baseline_score.ipynb</code> — signal checks and the hand-rule baseline.</li>
+    <li><code>work/notebooks/w05_model.ipynb</code> — first model vs baseline on the grouped holdout.</li>
+    <li><code>work/notebooks/w06_validation_audit.ipynb</code> — the paper-level audit: random vs grouped split, leakage probes, claim rewrite.</li>
+    <li><code>work/notebooks/w07_action_playbook.ipynb</code> — regenerates the ranked queue (<code>work/outputs/action_playbook_queue.csv</code>) and the figures embedded above.</li>
+    <li><code>work/notebooks/capstone.ipynb</code> — this paper's evidence annex; re-runs the headline table.</li>
+    <li>Receipts: <code>work/outputs/w05_model_metrics.json</code>, <code>work/outputs/w07_action_playbook_metrics.json</code>.</li>
+  </ul>
+  <p><strong>How to rerun.</strong> Clone the repo, run each notebook top to bottom in the order above. The queue CSV is regenerated by w07 and is intentionally kept out of git (a CI leak-guard blocks data files); the figures and JSON receipts are committed.</p>
+</section>
+
+<section id="credit">
+  <h2><span class="num">9.</span> Acknowledgments &amp; data credit</h2>
+  <p>This work is built on the <strong>FlyRank ML Internship dataset</strong> — an anonymized, public-safe release of real production search data (~30,000 pages, 32 pseudonymized clients) provided by <a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank</a> (opens in a new tab), the search-intelligence platform behind the FlyRank ML&nbsp;Internship. The data is the reason this paper is able to say <em>measured</em>: it is real portfolio behavior, not synthetic. Any errors in interpretation are the author's, not the data's.</p>
+  <div class="context">
+    <h3>The 10-second version</h3>
+    <p><strong>Problem.</strong> Large content libraries decay, and nobody can review every page.</p>
+    <p><strong>Contribution.</strong> A leakage-audited ranker, validated on clients the model never saw, that orders pages for review and explains each action.</p>
+    <p><strong>Utility.</strong> An editor opens the top of the queue, checks the giants first, and spends the 30 cheapest seconds on title/meta work; nothing is automated or forecast.</p>
+  </div>
+</section>
+
+</article>
+
+<footer>
+  <p><strong>Cite as:</strong> Yadav, G. (2026). <em>Which pages should a content team refresh first?</em> FlyRank ML Internship capstone. Static research page deployed from the project repository.</p>
+  <p>Last updated September 2026 · one page, one analysis · claim language: observed / measured / directional / decision-support</p>
+</footer>
+
+</div>
+</body>
+</html>
